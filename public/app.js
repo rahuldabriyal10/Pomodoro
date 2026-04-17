@@ -404,3 +404,4 @@ if (toggleAuthMode && authTitle && submitAuthBtn) {
         toggleAuthMode.textContent = isLoginMode ? "Need an account? Register" : "Have an account? Login";
     });
 }
+updateDisplay();
