@@ -302,3 +302,33 @@ input[type="range"] {
 }
 .stat-value { font-size: 36px; font-weight: bold; color: #ffcc33; }
 .stat-label { font-size: 14px; opacity: 0.8; margin-top: 5px; }
+
+/* --- NEW AUTH & DATABASE WIDGET STYLES --- */
+.glass-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.2);
+    outline: none;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    transition: all 0.2s;
+}
+.glass-input:focus {
+    background: rgba(255,255,255,0.2);
+    border-color: #ffb347;
+}
+.primary-action-btn {
+    width: 100%;
+    padding: 12px;
+    background: #ffb347;
+    color: black;
+    font-weight: bold;
+    font-size: 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+.primary-action-btn:hover { background: #ffcc66; }
+.primary-action-btn:active { transform: scale(0.98); }

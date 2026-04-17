@@ -221,6 +221,11 @@ function openModal(modal) {
     modalOverlay.classList.add("active");
     taskModal.classList.remove("active");
     statsModal.classList.remove("active");
+    
+    // Safely close auth modal if it exists
+    const authModal = document.getElementById("authModal");
+    if(authModal) authModal.classList.remove("active");
+    
     modal.classList.add("active");
 }
 
@@ -230,6 +235,10 @@ function closeModals() {
     modalOverlay.classList.remove("active");
     taskModal.classList.remove("active");
     statsModal.classList.remove("active");
+    
+    // Safely close auth modal if it exists
+    const authModal = document.getElementById("authModal");
+    if(authModal) authModal.classList.remove("active");
 }
 
 taskBtn.addEventListener("click", () => openModal(taskModal));
@@ -370,3 +379,28 @@ document.addEventListener('mouseup', () => {
         el.container.style.transition = 'background 0.6s ease, box-shadow 0.6s ease';
     }
 });
+
+// ==========================================
+// --- NEW: SAFE UI HOOKS FOR ACCOUNT UI ---
+// ==========================================
+const authBtn = document.getElementById("authBtn");
+const toggleAuthMode = document.getElementById("toggleAuthMode");
+const authTitle = document.getElementById("authTitle");
+const submitAuthBtn = document.getElementById("submitAuthBtn");
+
+if (authBtn) {
+    authBtn.addEventListener("click", () => {
+        const authModal = document.getElementById("authModal");
+        openModal(authModal);
+    });
+}
+
+if (toggleAuthMode && authTitle && submitAuthBtn) {
+    let isLoginMode = true;
+    toggleAuthMode.addEventListener("click", () => {
+        isLoginMode = !isLoginMode;
+        authTitle.textContent = isLoginMode ? "🔑 Login" : "📝 Register";
+        submitAuthBtn.textContent = isLoginMode ? "Sign In" : "Sign Up";
+        toggleAuthMode.textContent = isLoginMode ? "Need an account? Register" : "Have an account? Login";
+    });
+}

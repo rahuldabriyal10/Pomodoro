@@ -1,0 +1,28 @@
+{
+  "name": "pomodoro-timer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gypsumprodigee/Pomodoro.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Gypsumprodigee/Pomodoro/issues"
+  },
+  "homepage": "https://github.com/Gypsumprodigee/Pomodoro#readme",
+  "devDependencies": {
+    "jsdom": "^29.0.2",
+    "vitest": "^4.1.4"
+  },
+  "dependencies": {
+    "firebase": "^12.12.0"
+  }
+}
