@@ -23,14 +23,15 @@
             <button id="authBtn" title="Account Login">👤</button>
             <button id="taskBtn" title="Tasks">☑️</button>
             <button id="statsBtn" title="Statistics">📊</button>
+            <button id="leaderboardBtn" title="Leaderboard">🏆</button>
             <button id="fullscreenBtn" title="Full Screen">⛶</button>
         </div>
     </div>
 
     <div class="container theme-focus" id="timerContainer">
+        
         <div class="audio-widget">
             <div class="music-btn" id="musicBtn">🎵</div>
-
             <div class="audio-settings" id="audioSettings">
                 <select id="musicSelector" class="glass-select">
                     <option value="music/101.mp3">Lofi Beats</option>
@@ -52,7 +53,6 @@
         </div>
 
         <div class="session-tracker" id="sessionTracker">Sessions: 0/4</div>
-
         <div class="timer">
             <span id="minutes">25</span>:<span id="seconds">00</span>
         </div>
@@ -109,10 +109,18 @@
                 <p id="authMessage" style="font-size:12px; text-align:center; color:#ff5555;"></p>
             </div>
         </div>
+        
+        <div class="modal" id="leaderboardModal">
+            <button class="close-btn" onclick="closeModals()">✖</button>
+            <h2>🏆 Top Focusers</h2>
+            <p style="text-align: center; font-size: 0.9rem; opacity: 0.8; margin-bottom: 15px;">Global Ranking</p>
+            <ul id="leaderboardList" class="task-list" style="max-height: 250px; overflow-y: auto;">
+                </ul>
+        </div>
     
     </div>
 
     <script type="module" src="firebase-service.js"></script>
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
