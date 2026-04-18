@@ -1,0 +1,15 @@
+{
+  "short_name": "PomoSakura",
+  "name": "Stellar Pomodoro Sakura",
+  "icons": [
+    {
+      "src": "https://api.iconify.design/twemoji:cherry-blossom.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#ffb347",
+  "background_color": "#1a1a2e"
+}

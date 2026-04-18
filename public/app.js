@@ -1,5 +1,5 @@
 // app.js
-import { getLeaderboardData, getCurrentUser, logOutUser, updateUserProfile } from './firebase-service.js';
+import { getLeaderboardData, getCurrentUser, logOutUser, updateUserProfile, resetPassword, saveSessionRecord, getSessionHistory } from './firebase-service.js';
 
 // --- STORAGE HELPERS & SETTINGS ---
 function readJSON(key, fallback) {
@@ -74,17 +74,32 @@ function switchMode(newMode) {
 function handleSessionEnd() {
     pauseTimer();
     if (el.notify) el.notify.play().catch(() => {});
-
+    // Prepare data for the Analytical Report
+    const sessionData = {
+        mode: currentMode,
+        durationMinutes: Math.floor(MODES[currentMode] / 60),
+        taskName: "General Focus" // You can later link this to the actual task name
+    };
     if (currentMode === 'focus') {
+        // Trigger Notification for end of work
+        showNotification("Session Complete! 🌸", "Great job! Time for a well-deserved break.");
+        // Save individual record to database (Requirement: Relational Data)
+        saveSessionRecord(sessionData); 
+
         sessionCount++;
         totalHistoricalSessions++;
         totalHistoricalMinutes += Math.floor(MODES.focus / 60);
+        
         document.getElementById("totalSessionsStat").textContent = totalHistoricalSessions;
         document.getElementById("totalMinutesStat").textContent = totalHistoricalMinutes;
+        
         localStorage.setItem("totalSessions", totalHistoricalSessions);
         localStorage.setItem("totalMinutes", totalHistoricalMinutes);
+        
         switchMode(sessionCount % 4 === 0 ? 'long' : 'short');
     } else {
+        // Trigger Notification for end of break
+        showNotification("Break Over! 🦊", "Time to get back into the flow.");
         switchMode('focus');
     }
     startTimer();
@@ -147,33 +162,52 @@ taskInput.addEventListener("keypress", (e) => { if (e.key === "Enter") addTask()
 
 // --- MODALS & UI HOOKS ---
 const modalOverlay = document.getElementById("modalOverlay");
-// NEW: Added profileModal to the array so it closes properly
 const modals = ["taskModal", "statsModal", "authModal", "leaderboardModal", "profileModal"];
 
 function openModal(modalId) {
     if (!modalOverlay) return;
-    modalOverlay.classList.add("active");
+
+    // 1. Keep your structured loop - this is good code!
     modals.forEach(id => {
         const m = document.getElementById(id);
         if (m) m.classList.remove("active");
     });
+
+    // 2. THE GHOST BUSTER: 
+    // Just in case a modal is active but wasn't in the 'modals' array
+    document.querySelectorAll('.modal.active').forEach(activeModal => {
+        activeModal.classList.remove('active');
+    });
+
+    // 3. Open the one you actually wanted
+    modalOverlay.classList.add("active");
     const target = document.getElementById(modalId);
-    if (target) target.classList.add("active");
+    if (target) {
+        target.classList.add("active");
+    }
 }
 
 function closeModals() {
     if (!modalOverlay) return;
+    
+    // 1. Remove the blur/background overlay
     modalOverlay.classList.remove("active");
+
+    // 2. Keep your original loop for consistency
     modals.forEach(id => {
         const m = document.getElementById(id);
         if (m) m.classList.remove("active");
     });
-}
 
+    // 3. THE GHOST BUSTER: Final sweep to ensure NOTHING is active
+    document.querySelectorAll('.modal.active').forEach(m => {
+        m.classList.remove("active");
+    });
+}
 document.getElementById("taskBtn")?.addEventListener("click", () => openModal("taskModal"));
 document.getElementById("statsBtn")?.addEventListener("click", () => openModal("statsModal"));
 
-// NEW: Smart Auth Button Logic
+// Smart Auth Button Logic
 document.getElementById("authBtn")?.addEventListener("click", () => {
     const user = getCurrentUser(); // Checks Firebase for a logged-in user
     if (user) {
@@ -190,6 +224,67 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal
 const toggleAuthMode = document.getElementById("toggleAuthMode");
 const authTitle = document.getElementById("authTitle");
 const submitAuthBtn = document.getElementById("submitAuthBtn");
+const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+
+if (toggleAuthMode && authTitle && submitAuthBtn) {
+    let isLoginMode = true;
+    toggleAuthMode.addEventListener("click", () => {
+        isLoginMode = !isLoginMode;
+        authTitle.textContent = isLoginMode ? "🔑 Login" : "📝 Register";
+        submitAuthBtn.textContent = isLoginMode ? "Sign In" : "Sign Up";
+        toggleAuthMode.textContent = isLoginMode ? "Need an account? Register" : "Have an account? Login";
+        
+        // Hide "Forgot Password" when registering
+        if (forgotPasswordBtn) {
+            forgotPasswordBtn.style.display = isLoginMode ? "block" : "none";
+        }
+    });
+}
+
+// --- NEW: FORGOT PASSWORD LOGIC ---
+if (forgotPasswordBtn) {
+    forgotPasswordBtn.addEventListener("click", async () => {
+        const email = document.getElementById("authEmail").value.trim();
+        const authMessage = document.getElementById("authMessage");
+        
+        if (!email) {
+            authMessage.style.color = "#ff5555";
+            authMessage.textContent = "Please type your email in the box first!";
+            return;
+        }
+        
+        authMessage.style.color = "#ffffff";
+        authMessage.textContent = "Sending reset link... ⏳";
+        
+        const result = await resetPassword(email);
+        
+        if (result.success) {
+            authMessage.style.color = "#55ff55";
+            authMessage.textContent = result.message;
+        } else {
+            authMessage.style.color = "#ff5555";
+            authMessage.textContent = result.message;
+        }
+    });
+}
+
+// NEW: Smart Auth Button Logic
+document.getElementById("authBtn")?.addEventListener("click", () => {
+    const user = getCurrentUser(); // Checks Firebase for a logged-in user
+    if (user) {
+        document.getElementById("profileEmailDisplay").textContent = `Signed in as: ${user.email}`;
+        openModal("profileModal");
+    } else {
+        openModal("authModal");
+    }
+});
+
+modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModals(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModals(); });
+
+/*const toggleAuthMode = document.getElementById("toggleAuthMode");
+const authTitle = document.getElementById("authTitle");
+const submitAuthBtn = document.getElementById("submitAuthBtn");*/
 
 if (toggleAuthMode && authTitle && submitAuthBtn) {
     let isLoginMode = true;
@@ -371,3 +466,61 @@ if (fullscreenBtn) {
         }
     });
 }
+// --- NOTIFICATION ENGINE ---
+function requestNotificationPermission() {
+    if ("Notification" in window) {
+        if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+    }
+}
+
+function showNotification(title, body) {
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, {
+            body: body,
+            icon: "https://api.iconify.design/twemoji:cherry-blossom.svg" // Using your Sakura icon
+        });
+    }
+}
+
+// Call the request on load
+requestNotificationPermission();
+// --- PWA INSTALLATION LOGIC ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('PWA Service Worker registered!', reg))
+      .catch(err => console.log('PWA Service Worker failed:', err));
+  });
+}
+// --- HISTORY REPORT LOGIC ---
+const loadHistory = async () => {
+    const historyList = document.getElementById("historyList");
+    if (!historyList) return;
+
+    historyList.innerHTML = "<li>Loading history...</li>";
+    const data = await getSessionHistory();
+    historyList.innerHTML = "";
+
+    if (data.length === 0) {
+        historyList.innerHTML = "<li>No sessions recorded yet.</li>";
+        return;
+    }
+
+    data.forEach(item => {
+        const date = item.timestamp.toDate().toLocaleDateString();
+        const li = document.createElement("li");
+        li.className = "task-item";
+        li.innerHTML = `
+            <span>${date} - ${item.mode.toUpperCase()}</span>
+            <span style="color: var(--primary-color);">${item.durationMinutes}m</span>
+        `;
+        historyList.appendChild(li);
+    });
+};
+
+// Add listener to your stats button to also load history
+document.getElementById("statsBtn")?.addEventListener("click", () => {
+    loadHistory();
+});

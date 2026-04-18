@@ -1,7 +1,7 @@
 // firebase-service.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 // NEW: Added signOut
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // 1. YOUR FIREBASE CONFIGURATION
@@ -53,6 +53,9 @@ if (submitAuthBtn) {
                 await signInWithEmailAndPassword(auth, email, password);
                 authMessage.style.color = "#55ff55";
                 authMessage.textContent = "Logged in securely!";
+                if (typeof window.closeModals === "function") {
+                    setTimeout(() => window.closeModals(), 600); 
+                }
             } else {
                 await createUserWithEmailAndPassword(auth, email, password);
                 authMessage.style.color = "#55ff55";
@@ -224,4 +227,51 @@ export const getLeaderboardData = async () => {
     console.error("Error fetching leaderboard:", error);
     return []; 
   }
+};
+// FEATURE: Password Reset (Security/UX)
+export const resetPassword = async (email) => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    return { success: true, message: "Reset link sent! Check your inbox." };
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    return { success: false, message: error.message.replace("Firebase: ", "") };
+  }
+};
+// FEATURE: Session Logging (For Relational Reporting)
+export const saveSessionRecord = async (sessionData) => {
+    if (!auth.currentUser) return;
+    try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const sessionsRef = collection(userRef, "sessions");
+        
+        await addDoc(sessionsRef, {
+            ...sessionData,
+            timestamp: new Date(),
+            userId: auth.currentUser.uid // Explicit foreign key for your documentation
+        });
+        console.log("Session logged to cloud database.");
+    } catch (error) {
+        console.error("Error logging session:", error);
+    }
+};
+
+// FEATURE: Fetch History (For Analytical Reports)
+export const getSessionHistory = async () => {
+    if (!auth.currentUser) return [];
+    try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const sessionsRef = collection(userRef, "sessions");
+        const q = query(sessionsRef, orderBy("timestamp", "desc"), limit(20));
+        
+        const querySnapshot = await getDocs(q);
+        const history = [];
+        querySnapshot.forEach((doc) => {
+            history.push({ id: doc.id, ...doc.data() });
+        });
+        return history;
+    } catch (error) {
+        console.error("Error fetching history:", error);
+        return [];
+    }
 };

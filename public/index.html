@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stellar Pomodoro</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -83,20 +84,24 @@
             </ul>
         </div>
 
-        <div class="modal" id="statsModal">
-            <button class="close-btn" onclick="closeModals()">✖</button>
-            <h2>📊 Statistics</h2>
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div class="stat-value" id="totalSessionsStat">0</div>
-                    <div class="stat-label">Focus Sessions</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="totalMinutesStat">0</div>
-                    <div class="stat-label">Focus Minutes</div>
-                </div>
+    <div class="modal" id="statsModal">
+        <button class="close-btn" onclick="closeModals()">✖</button>
+        <h2>📊 Statistics & Reports</h2>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="totalSessionsStat">0</div>
+                <div class="stat-label">Total Sessions</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="totalMinutesStat">0</div>
+                <div class="stat-label">Total Minutes</div>
             </div>
         </div>
+        
+        <h3 style="margin-top:20px; font-size: 1rem;">Recent Session History</h3>
+        <ul id="historyList" class="task-list" style="max-height: 150px; overflow-y: auto; margin-top: 10px;">
+            </ul>
+    </div>
 
         <div class="modal" id="authModal">
             <button class="close-btn" onclick="closeModals()">✖</button>
@@ -105,6 +110,7 @@
                 <input type="email" id="authEmail" placeholder="Email Address" class="glass-input">
                 <input type="password" id="authPassword" placeholder="Password" class="glass-input">
                 <button id="submitAuthBtn" class="primary-action-btn">Sign In</button>
+                <p id="forgotPasswordBtn" style="cursor:pointer; font-size:12px; text-align:center; color:#aaaaaa; margin-top:-5px;">Forgot Password?</p>
                 <p id="toggleAuthMode" style="cursor:pointer; font-size:12px; text-align:center; color:#ffb347;">Need an account? Register</p>
                 <p id="authMessage" style="font-size:12px; text-align:center; color:#ff5555;"></p>
             </div>
