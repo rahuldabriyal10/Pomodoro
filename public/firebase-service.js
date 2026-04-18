@@ -1,7 +1,7 @@
 // firebase-service.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-// UPDATED IMPORT: Added collection, addDoc, query, orderBy, limit for the new features
+// NEW: Added signOut
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // 1. YOUR FIREBASE CONFIGURATION
@@ -77,6 +77,13 @@ onAuthStateChanged(auth, async (user) => {
         if (snap.exists()) {
             const cloudData = snap.data();
             
+            // NEW: Populate Profile Modal fields automatically
+            const profileName = document.getElementById("profileDisplayName");
+            const profileGoal = document.getElementById("profileStudyGoal");
+            if (profileName) profileName.value = cloudData.displayName || user.email.split('@')[0];
+            if (profileGoal) profileGoal.value = cloudData.studyGoal || "";
+
+            // Sync Stats
             const localSessions = Number(localStorage.getItem("totalSessions")) || 0;
             if (cloudData.stats && cloudData.stats.totalSessions > localSessions) {
                 localStorage.setItem("totalSessions", cloudData.stats.totalSessions);
@@ -88,9 +95,14 @@ onAuthStateChanged(auth, async (user) => {
                 if (tmStat) tmStat.textContent = cloudData.stats.totalMinutes;
             }
 
+            // Sync Tasks
             if (cloudData.tasks) {
                 localStorage.setItem("tasks", JSON.stringify(cloudData.tasks));
             }
+        } else {
+            // New User Fallback
+            const profileName = document.getElementById("profileDisplayName");
+            if (profileName) profileName.value = user.email.split('@')[0];
         }
     } else {
         if (authBtn) authBtn.textContent = "👤";
@@ -129,6 +141,17 @@ localStorage.setItem = function(key, value) {
 // 7. B.Sc. DEGREE REQUIREMENTS (RELATIONAL DATABASE & LEADERBOARD)
 // =====================================================================
 
+// NEW: Exported Auth Functions for app.js
+export const getCurrentUser = () => auth.currentUser;
+
+export const logOutUser = async () => {
+    try {
+        await signOut(auth);
+    } catch (error) {
+        console.error("Error signing out:", error);
+    }
+};
+
 // FEATURE: Create a Project (Category) for Relational ER Diagram
 export const createProject = async (projectName) => {
   if (!auth.currentUser) return;
@@ -164,11 +187,15 @@ export const addTaskToProject = async (projectId, taskName) => {
 };
 
 // FEATURE: Update User Profile (Security & Access Rights)
-export const updateUserProfile = async (displayName) => {
+// UPGRADED: Now accepts studyGoal
+export const updateUserProfile = async (displayName, studyGoal = "") => {
   if (!auth.currentUser) return;
   try {
     const userRef = doc(db, "users", auth.currentUser.uid);
-    await setDoc(userRef, { displayName: displayName }, { merge: true });
+    await setDoc(userRef, { 
+        displayName: displayName,
+        studyGoal: studyGoal
+    }, { merge: true });
     console.log("Profile updated successfully!");
   } catch (error) {
     console.error("Error updating profile:", error);

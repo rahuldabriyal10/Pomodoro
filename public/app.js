@@ -1,5 +1,5 @@
 // app.js
-import { getLeaderboardData } from './firebase-service.js';
+import { getLeaderboardData, getCurrentUser, logOutUser, updateUserProfile } from './firebase-service.js';
 
 // --- STORAGE HELPERS & SETTINGS ---
 function readJSON(key, fallback) {
@@ -147,7 +147,8 @@ taskInput.addEventListener("keypress", (e) => { if (e.key === "Enter") addTask()
 
 // --- MODALS & UI HOOKS ---
 const modalOverlay = document.getElementById("modalOverlay");
-const modals = ["taskModal", "statsModal", "authModal", "leaderboardModal"];
+// NEW: Added profileModal to the array so it closes properly
+const modals = ["taskModal", "statsModal", "authModal", "leaderboardModal", "profileModal"];
 
 function openModal(modalId) {
     if (!modalOverlay) return;
@@ -171,7 +172,17 @@ function closeModals() {
 
 document.getElementById("taskBtn")?.addEventListener("click", () => openModal("taskModal"));
 document.getElementById("statsBtn")?.addEventListener("click", () => openModal("statsModal"));
-document.getElementById("authBtn")?.addEventListener("click", () => openModal("authModal"));
+
+// NEW: Smart Auth Button Logic
+document.getElementById("authBtn")?.addEventListener("click", () => {
+    const user = getCurrentUser(); // Checks Firebase for a logged-in user
+    if (user) {
+        document.getElementById("profileEmailDisplay").textContent = `Signed in as: ${user.email}`;
+        openModal("profileModal");
+    } else {
+        openModal("authModal");
+    }
+});
 
 modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModals(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModals(); });
@@ -187,6 +198,35 @@ if (toggleAuthMode && authTitle && submitAuthBtn) {
         authTitle.textContent = isLoginMode ? "🔑 Login" : "📝 Register";
         submitAuthBtn.textContent = isLoginMode ? "Sign In" : "Sign Up";
         toggleAuthMode.textContent = isLoginMode ? "Need an account? Register" : "Have an account? Login";
+    });
+}
+
+// --- NEW: PROFILE LOGIC ---
+const saveProfileBtn = document.getElementById("saveProfileBtn");
+if (saveProfileBtn) {
+    saveProfileBtn.addEventListener("click", async () => {
+        const displayName = document.getElementById("profileDisplayName").value.trim();
+        const studyGoal = document.getElementById("profileStudyGoal").value.trim();
+        
+        await updateUserProfile(displayName, studyGoal);
+        
+        const msg = document.getElementById("profileMessage");
+        if (msg) {
+            msg.style.color = "#55ff55";
+            msg.textContent = "Profile updated successfully!";
+            setTimeout(() => { 
+                msg.textContent = ""; 
+                closeModals(); 
+            }, 1500);
+        }
+    });
+}
+
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+        await logOutUser();
+        window.location.reload(); // Refresh the page to clear states securely
     });
 }
 
@@ -277,6 +317,7 @@ if (musicSelector) {
         }
     });
 }
+
 // --- DRAG & DROP ---
 let isDragging = false, dragOffsetX, dragOffsetY;
 el.container.addEventListener('mousedown', (e) => {
@@ -304,6 +345,7 @@ window.switchMode = switchMode; window.closeModals = closeModals;
 renderTasks(); updateUI();
 document.getElementById("totalSessionsStat").textContent = totalHistoricalSessions;
 document.getElementById("totalMinutesStat").textContent = totalHistoricalMinutes;
+
 // --- FULLSCREEN ---
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 
@@ -312,10 +354,10 @@ if (fullscreenBtn) {
         try {
             if (!document.fullscreenElement) {
                 await document.documentElement.requestFullscreen();
-                fullscreenBtn.textContent = "🡼"; // Change icon to 'exit fullscreen'
+                fullscreenBtn.textContent = "🡼"; 
             } else {
                 await document.exitFullscreen();
-                fullscreenBtn.textContent = "⛶"; // Change icon back to 'enter fullscreen'
+                fullscreenBtn.textContent = "⛶"; 
             }
         } catch (err) {
             console.error("Error attempting to enable fullscreen:", err);
@@ -323,7 +365,6 @@ if (fullscreenBtn) {
         }
     });
 
-    // Listen for the "Escape" key exiting fullscreen natively
     document.addEventListener("fullscreenchange", () => {
         if (fullscreenBtn) {
             fullscreenBtn.textContent = document.fullscreenElement ? "🡼" : "⛶";
