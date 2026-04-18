@@ -267,3 +267,29 @@ window.switchMode = switchMode; window.closeModals = closeModals;
 renderTasks(); updateUI();
 document.getElementById("totalSessionsStat").textContent = totalHistoricalSessions;
 document.getElementById("totalMinutesStat").textContent = totalHistoricalMinutes;
+// --- FULLSCREEN ---
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+
+if (fullscreenBtn) {
+    fullscreenBtn.addEventListener("click", async () => {
+        try {
+            if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+                fullscreenBtn.textContent = "🡼"; // Change icon to 'exit fullscreen'
+            } else {
+                await document.exitFullscreen();
+                fullscreenBtn.textContent = "⛶"; // Change icon back to 'enter fullscreen'
+            }
+        } catch (err) {
+            console.error("Error attempting to enable fullscreen:", err);
+            fullscreenBtn.textContent = "⛶";
+        }
+    });
+
+    // Listen for the "Escape" key exiting fullscreen natively
+    document.addEventListener("fullscreenchange", () => {
+        if (fullscreenBtn) {
+            fullscreenBtn.textContent = document.fullscreenElement ? "🡼" : "⛶";
+        }
+    });
+}
