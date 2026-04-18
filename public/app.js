@@ -225,21 +225,58 @@ document.getElementById("leaderboardBtn")?.addEventListener("click", () => {
 const bgMusic = document.getElementById("bgMusic");
 const musicBtn = document.getElementById("musicBtn");
 const volumeSlider = document.getElementById("volumeSlider");
+const musicSelector = document.getElementById("musicSelector");
 
-const initialVolume = Number(localStorage.getItem("volume")) || 0.5;
-bgMusic.volume = initialVolume;
-if(volumeSlider) volumeSlider.value = initialVolume;
+// Load saved settings from memory
+const savedVolume = Number(localStorage.getItem("volume"));
+const initialVolume = Number.isFinite(savedVolume) ? savedVolume : 0.5;
+const savedTrack = localStorage.getItem("selectedTrack") || "music/101.mp3";
 
-musicBtn?.addEventListener("click", () => {
-    if (bgMusic.paused) { bgMusic.play().then(() => musicBtn.textContent = "🔊").catch(()=>{}); } 
-    else { bgMusic.pause(); musicBtn.textContent = "🎵"; }
-});
+if (bgMusic) {
+    bgMusic.src = savedTrack;
+    bgMusic.volume = initialVolume;
+}
 
-volumeSlider?.addEventListener("input", (e) => {
-    bgMusic.volume = e.target.value;
-    localStorage.setItem("volume", e.target.value);
-});
+if (volumeSlider) volumeSlider.value = String(initialVolume);
+if (musicSelector) musicSelector.value = savedTrack;
 
+// Play / Pause Button
+if (musicBtn) {
+    musicBtn.addEventListener("click", () => {
+        if (bgMusic.paused) {
+            bgMusic.play()
+                .then(() => { musicBtn.textContent = "🔊"; })
+                .catch(() => { musicBtn.textContent = "🎵"; });
+        } else {
+            bgMusic.pause();
+            musicBtn.textContent = "🎵";
+        }
+    });
+}
+
+// Volume Slider
+if (volumeSlider) {
+    volumeSlider.addEventListener("input", (e) => {
+        bgMusic.volume = e.target.value;
+        localStorage.setItem("volume", e.target.value);
+    });
+}
+
+// Dropdown Track Selector
+if (musicSelector) {
+    musicSelector.addEventListener("change", (e) => {
+        const wasPlaying = !bgMusic.paused;
+        bgMusic.src = e.target.value;
+        localStorage.setItem("selectedTrack", e.target.value);
+
+        // If music was already playing, auto-play the new track
+        if (wasPlaying) {
+            bgMusic.play().catch(() => {
+                musicBtn.textContent = "🎵";
+            });
+        }
+    });
+}
 // --- DRAG & DROP ---
 let isDragging = false, dragOffsetX, dragOffsetY;
 el.container.addEventListener('mousedown', (e) => {
