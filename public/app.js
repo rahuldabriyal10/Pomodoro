@@ -1,6 +1,10 @@
 // app.js
 import { getLeaderboardData, getCurrentUser, logOutUser, updateUserProfile, resetPassword, saveSessionRecord, getSessionHistory } from './firebase-service.js';
 
+// window.onload = () => {
+//     alert("For better Exp use Desktop Mode!")
+// }
+
 // --- STORAGE HELPERS & SETTINGS ---
 function readJSON(key, fallback) {
     try {
@@ -524,3 +528,38 @@ const loadHistory = async () => {
 document.getElementById("statsBtn")?.addEventListener("click", () => {
     loadHistory();
 });
+
+const changeImgBtn = document.getElementById("changeImg");
+const bgVideo = document.getElementById("bg-video");
+
+const backgrounds = [
+    "image_res/bg_v.mp4",
+    "image_res/bg_v2.mp4",
+    "image_res/bg_v3.mp4",
+    "image_res/bg_v5.mp4"
+];
+
+let currentBgIndex = 0;
+
+// Load saved background
+const savedBg = localStorage.getItem("selectedBg");
+if (savedBg && bgVideo) {
+    bgVideo.querySelector("source").src = savedBg;
+    bgVideo.load();
+}
+
+if (changeImgBtn && bgVideo) {
+    changeImgBtn.addEventListener("click", () => {
+        currentBgIndex = (currentBgIndex + 1) % backgrounds.length;
+        const newBg = backgrounds[currentBgIndex];
+
+        const source = bgVideo.querySelector("source");
+        source.src = newBg;
+
+        bgVideo.load();
+        bgVideo.play().catch(() => {});
+
+        localStorage.setItem("selectedBg", newBg);
+    });
+}
+
