@@ -5,15 +5,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, on
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // 1. YOUR FIREBASE CONFIGURATION
-const firebaseConfig = {
-  apiKey: "REMOVED_API_KEY",
-  authDomain: "stellar-pomodoro.firebaseapp.com",
-  projectId: "stellar-pomodoro",
-  storageBucket: "stellar-pomodoro.firebasestorage.app",
-  messagingSenderId: "82082541191",
-  appId: "1:82082541191:web:16134b4cd01c3471865222",
-  measurementId: "G-VJ3F6TH118"
-};
+
 
 // 2. INITIALIZE FIREBASE
 const app = initializeApp(firebaseConfig);
